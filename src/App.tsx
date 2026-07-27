@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { Board } from './components/Board';
 import { CombinationTable } from './components/CombinationTable';
 import { ResultPanel } from './components/ResultPanel';
-import { PRESETS, useTurnState } from './hooks/useTurnState';
+import { useTurnState } from './hooks/useTurnState';
 import './App.css';
 
 type Theme = 'light' | 'dark' | 'system';
@@ -32,7 +32,7 @@ function applyTheme(theme: Theme) {
 }
 
 export default function App() {
-  const { state, result, toggleCell, toggleCleared, setRunnerColumns, reset, applyPreset } = useTurnState();
+  const { state, result, toggleCell, toggleCleared, setRunnerColumns, reset } = useTurnState();
   const [theme, setTheme] = useState<Theme>(getInitialTheme);
 
   useEffect(() => {
@@ -61,17 +61,6 @@ export default function App() {
       <Board state={state} onCellClick={toggleCell} onHeaderClick={toggleCleared} />
 
       <div className="controls">
-        {PRESETS.map(preset => (
-          <button
-            type="button"
-            key={preset.label}
-            className="btn btn--preset"
-            title={preset.hint}
-            onClick={() => applyPreset(preset)}
-          >
-            {preset.label}
-          </button>
-        ))}
         <button type="button" className="btn btn--reset" onClick={reset}>リセット</button>
       </div>
 

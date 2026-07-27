@@ -32,7 +32,7 @@ function applyTheme(theme: Theme) {
 }
 
 export default function App() {
-  const { state, result, toggleCell, toggleCleared, setRunnerColumns, reset } = useTurnState();
+  const { state, result, toggleCell, toggleCleared, setRunnerColumns, resetAll, resetRunners } = useTurnState();
   const [theme, setTheme] = useState<Theme>(getInitialTheme);
 
   useEffect(() => {
@@ -61,7 +61,22 @@ export default function App() {
       <Board state={state} onCellClick={toggleCell} onHeaderClick={toggleCleared} />
 
       <div className="controls">
-        <button type="button" className="btn btn--reset" onClick={reset}>リセット</button>
+        <button
+          type="button"
+          className="btn btn--reset"
+          title="ランナーだけ消します。クリア済みの列はそのまま残ります"
+          onClick={resetRunners}
+        >
+          進行中列リセット
+        </button>
+        <button
+          type="button"
+          className="btn btn--reset"
+          title="ランナーとクリア済みの列を全て消します"
+          onClick={resetAll}
+        >
+          全列リセット
+        </button>
       </div>
 
       <ResultPanel state={state} result={result} />

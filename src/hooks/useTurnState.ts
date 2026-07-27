@@ -64,9 +64,15 @@ export function useTurnState() {
     }));
   }, []);
 
-  const reset = useCallback(() => {
+  /** ランナーもクリア済みの列も全て消す。 */
+  const resetAll = useCallback(() => {
     setState({ runners: [], clearedColumns: [], progress: {} });
   }, []);
 
-  return { state, result, toggleCell, toggleCleared, setRunnerColumns, reset };
+  /** ランナーだけ消す。クリア済みの列はターンをまたいでも残るのでそのまま。 */
+  const resetRunners = useCallback(() => {
+    setState(prev => ({ ...prev, runners: [] }));
+  }, []);
+
+  return { state, result, toggleCell, toggleCleared, setRunnerColumns, resetAll, resetRunners };
 }

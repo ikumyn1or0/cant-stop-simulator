@@ -18,6 +18,10 @@
   --risk-max: #b91c1c;
   --btn-bg: #efe5d8;
   --btn-hover: #e2d4c1;
+  --accent-hover: #92400e;
+  /* 対戦のプレイヤー色: p0 = あなた、p1 = AI */
+  --p0: #b45309;
+  --p1: #1d4ed8;
 }
 
 * {
@@ -179,6 +183,307 @@ body {
   border-style: dashed;
   text-decoration: line-through;
 }
+
+/* Tabs */
+.tabs {
+  display: flex;
+  gap: 4px;
+  border-bottom: 1px solid var(--border);
+}
+
+.tab {
+  font: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  padding: 8px 16px;
+  border: none;
+  background: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px;
+}
+
+.tab:hover { color: var(--text); }
+
+.tab.is-active {
+  color: var(--accent);
+  border-bottom-color: var(--accent);
+}
+
+/* Match: setup and score */
+.setup {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.setup__label {
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.btn--level.is-active {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
+}
+
+.score {
+  display: flex;
+  gap: 8px;
+}
+
+.score__side {
+  flex: 1;
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 8px;
+  padding: 8px 12px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--surface);
+}
+
+.score__side.is-turn {
+  border-color: currentColor;
+  box-shadow: inset 0 0 0 1px currentColor;
+}
+
+.score__side--p0 { color: var(--p0); }
+.score__side--p1 { color: var(--p1); }
+
+.score__name { font-size: 13px; font-weight: 700; }
+
+.score__count {
+  font-size: 15px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: var(--text);
+}
+
+/* Match: board cells */
+.cell--game {
+  position: relative;
+  display: flex;
+  cursor: default;
+  overflow: hidden;
+}
+
+.half {
+  flex: 1;
+  display: block;
+}
+
+.half--filled.half--p0 { background: var(--p0); }
+.half--filled.half--p1 { background: var(--p1); }
+
+.cell--gain-p0 { box-shadow: inset 0 0 0 2px var(--p0); }
+.cell--gain-p1 { box-shadow: inset 0 0 0 2px var(--p1); }
+
+.cell--runner-p0 { box-shadow: inset 0 0 0 3px var(--p0), 0 0 0 1px var(--p0); }
+.cell--runner-p1 { box-shadow: inset 0 0 0 3px var(--p1), 0 0 0 1px var(--p1); }
+
+.cell--owned {
+  opacity: 0.45;
+  border-style: dashed;
+}
+
+.track__label--static { cursor: default; }
+
+.track__label--owned-p0 {
+  background: var(--p0);
+  border-color: var(--p0);
+  color: #fff;
+}
+
+.track__label--owned-p1 {
+  background: var(--p1);
+  border-color: var(--p1);
+  color: #fff;
+}
+
+.legend {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 6px 16px;
+  font-size: 11px;
+  color: var(--text-muted);
+  margin-top: -8px;
+}
+
+.legend__item {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.swatch {
+  width: 12px;
+  height: 12px;
+  border-radius: 3px;
+  border: 1px solid var(--border);
+}
+
+.swatch--p0 { background: var(--p0); border-color: var(--p0); }
+.swatch--p1 { background: var(--p1); border-color: var(--p1); }
+.swatch--runner { background: transparent; box-shadow: inset 0 0 0 2px var(--p0); }
+
+/* Match: turn area */
+.turn {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+}
+
+.turn__status {
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.turn__status--bust { color: var(--risk-max); }
+
+.turn__banner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  font-size: 18px;
+}
+
+.turn__banner--win strong { color: var(--risk-low); }
+.turn__banner--lose strong { color: var(--risk-max); }
+
+.dice-tray {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+}
+
+.dice {
+  display: flex;
+  gap: 8px;
+}
+
+.die {
+  width: 34px;
+  height: 34px;
+  display: grid;
+  place-items: center;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface-alt);
+  font-size: 17px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.die--empty { color: transparent; }
+
+.dice-tray__moves {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px;
+}
+
+.btn--move {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
+  font-weight: 600;
+}
+
+.btn--move:hover { background: var(--accent-hover, var(--accent)); opacity: 0.9; }
+
+.btn--stop {
+  background: transparent;
+  border-color: var(--accent);
+  color: var(--accent);
+  font-weight: 600;
+}
+
+.btn--stop:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.turn__actions {
+  display: flex;
+  gap: 8px;
+}
+
+.turn__burst {
+  font-size: 13px;
+  color: var(--text-muted);
+  text-align: center;
+}
+
+.turn__burst strong {
+  color: var(--text);
+  font-size: 15px;
+  font-variant-numeric: tabular-nums;
+}
+
+.turn__burst-detail {
+  display: block;
+  font-size: 11px;
+}
+
+.toggle {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: var(--text-muted);
+  cursor: pointer;
+}
+
+/* Match: log */
+.log {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 16px;
+}
+
+.log__title {
+  font-size: 15px;
+  font-weight: 700;
+  margin-bottom: 8px;
+}
+
+.log__list {
+  list-style: none;
+  max-height: 200px;
+  overflow-y: auto;
+  font-size: 12px;
+}
+
+.log__item {
+  display: flex;
+  gap: 8px;
+  padding: 3px 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.log__who {
+  flex-shrink: 0;
+  width: 4em;
+  font-weight: 700;
+}
+
+.log__item--p0 .log__who { color: var(--p0); }
+.log__item--p1 .log__who { color: var(--p1); }
 
 /* Result panel */
 .panel {
@@ -444,9 +749,15 @@ body {
     --risk-max: #f87171;
     --btn-bg: #332a21;
     --btn-hover: #43382c;
+    --accent-hover: #fbbf24;
+    --p0: #f59e0b;
+    --p1: #60a5fa;
   }
 
   html:not([data-theme="light"]) .risk { color: #1c1614; }
+  html:not([data-theme="light"]) .btn--move,
+  html:not([data-theme="light"]) .track__label--owned-p0,
+  html:not([data-theme="light"]) .track__label--owned-p1 { color: #1c1614; }
 }
 
 html[data-theme="dark"] {
@@ -469,6 +780,12 @@ html[data-theme="dark"] {
   --risk-max: #f87171;
   --btn-bg: #332a21;
   --btn-hover: #43382c;
+  --accent-hover: #fbbf24;
+  --p0: #f59e0b;
+  --p1: #60a5fa;
 }
 
 html[data-theme="dark"] .risk { color: #1c1614; }
+html[data-theme="dark"] .btn--move,
+html[data-theme="dark"] .track__label--owned-p0,
+html[data-theme="dark"] .track__label--owned-p1 { color: #1c1614; }

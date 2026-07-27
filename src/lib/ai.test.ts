@@ -3,8 +3,11 @@ import { COLUMN_HEIGHT } from './cantstop';
 import {
   DIFFICULTIES,
   chooseMove,
-  expectedValueAfterRoll,
+  currentProgress,
+  decide,
+  expectedAfterRoll,
   shouldContinue,
+  turnSteps,
   turnValue,
   type Difficulty,
 } from './ai';
@@ -122,13 +125,106 @@ describe('停止判断', () => {
   });
 
   it('つよいはランナー未配置なら必ず振る（バーストしないので損がない）', () => {
-    expect(expectedValueAfterRoll(createGame())).toBeGreaterThan(0);
+    expect(expectedAfterRoll(createGame()).value).toBeGreaterThan(0);
     expect(shouldContinue(createGame(), 'hard')).toBe(true);
   });
 
   it('つよいは積み上げた進捗が大きくバースト率も高ければ止める', () => {
     const game = gameWith({ runners: [2, 3, 12].map(column => ({ column, position: 2 })) });
     expect(shouldContinue(game, 'hard')).toBe(false);
+  });
+});
+
+describe('判断の根拠', () => {
+  const running = gameWith({
+    runners: [6, 7, 8].map(column => ({ column, position: 1 })),
+    rollsThisTurn: 1,
+  });
+
+  it('shouldContinue は decide の結論と一致する', () => {
+    const games = [
+      createGame(),
+      running,
+      gameWith({ runners: [2, 3, 12].map(column => ({ column, position: 2 })), rollsThisTurn: 3 }),
+      gameWith({ runners: [{ column: 2, position: COLUMN_HEIGHT[2] }], rollsThisTurn: 1 }),
+    ];
+    for (const game of games) {
+      for (const difficulty of DIFFICULTIES) {
+        expect(shouldContinue(game, difficulty)).toBe(decide(game, difficulty).continue);
+      }
+    }
+  });
+
+  it('難易度ごとに、実際に使った基準の内訳が入る', () => {
+    const easy = decide(running, 'easy');
+    expect(easy.reason).toBe('rolls');
+    expect(easy.rolls).toEqual({ done: 1, max: 2 });
+    expect(easy.burst).toBeUndefined();
+    expect(easy.expected).toBeUndefined();
+
+    const normal = decide(running, 'normal');
+    expect(normal.reason).toBe('burst');
+    expect(normal.burst!.threshold).toBe(0.25);
+    expect(normal.burst!.probability).toBeCloseTo(104 / 1296, 12); // 6/7/8 は 8.02%
+    expect(normal.expected).toBeUndefined();
+
+    const hard = decide(running, 'hard');
+    expect(hard.reason).toBe('expectimax');
+    expect(hard.expected!.value).toBeCloseTo(expectedAfterRoll(running).value, 12);
+    expect(hard.burst).toBeUndefined();
+  });
+
+  it('止めれば勝てる局面では、どの難易度でも reason が win になる', () => {
+    const winning = gameWith({
+      claimedBy: { 2: 0, 3: 0 },
+      runners: [{ column: 12, position: COLUMN_HEIGHT[12] }],
+      rollsThisTurn: 1,
+    });
+    for (const difficulty of DIFFICULTIES) {
+      const d = decide(winning, difficulty);
+      expect(d.reason).toBe('win');
+      expect(d.continue).toBe(false);
+    }
+  });
+
+  it('どの難易度でも今の進捗は入る', () => {
+    for (const difficulty of DIFFICULTIES) {
+      expect(decide(running, difficulty).current).toEqual(currentProgress(running));
+    }
+  });
+});
+
+describe('進捗の数え方', () => {
+  it('マス数は段数で割らない', () => {
+    const short = gameWith({ runners: [{ column: 2, position: 1 }] });
+    const long = gameWith({ runners: [{ column: 7, position: 1 }] });
+    expect(turnSteps(short)).toBe(1);
+    expect(turnSteps(long)).toBe(1);
+    // 列数のほうは段数で割るので差が出る
+    expect(turnValue(short)).toBeGreaterThan(turnValue(long));
+  });
+
+  it('恒久進捗からの増分だけを数える', () => {
+    const game = gameWith({ progress: [{ 7: 4 }, {}], runners: [{ column: 7, position: 7 }] });
+    expect(turnSteps(game)).toBe(3);
+  });
+
+  it('複数のランナーのマス数を合計する', () => {
+    const game = gameWith({ runners: [{ column: 6, position: 3 }, { column: 8, position: 2 }] });
+    expect(turnSteps(game)).toBe(5);
+  });
+
+  it('期待値は列数もマス数も正の値になる', () => {
+    const forecast = expectedAfterRoll(createGame());
+    expect(forecast.value).toBeGreaterThan(0);
+    expect(forecast.steps).toBeGreaterThan(0);
+    // ランナー未配置なら必ず2マス進める（1回で2つの和を使うため）
+    expect(forecast.steps).toBeCloseTo(2, 10);
+  });
+
+  it('バーストしうる局面では期待マス数が現在のマス数を下回りうる', () => {
+    const risky = gameWith({ runners: [2, 3, 12].map(column => ({ column, position: 2 })) });
+    expect(expectedAfterRoll(risky).steps).toBeLessThan(turnSteps(risky));
   });
 });
 

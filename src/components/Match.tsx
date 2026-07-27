@@ -1,4 +1,5 @@
 import { DIFFICULTIES, DIFFICULTY_HINTS, DIFFICULTY_LABELS } from '../lib/ai';
+import { describeDecision, formatProgress } from '../lib/format';
 import { COLUMNS_TO_WIN, claimedCount } from '../lib/game';
 import { AI, HUMAN, PLAYER_NAMES, useMatch } from '../hooks/useMatch';
 import { DiceTray } from './DiceTray';
@@ -8,8 +9,10 @@ import { TurnLog } from './TurnLog';
 export function Match() {
   const {
     game, log, moves, burst, isHumanTurn,
+    progressNow, forecast, aiDecision,
     difficulty, setDifficulty,
     showBurst, setShowBurst,
+    showForecast, setShowForecast,
     roll, choose, stop, acknowledgeBust, newMatch,
   } = useMatch();
 
@@ -59,6 +62,27 @@ export function Match() {
           <>
             <div className="turn__status">AI（{DIFFICULTY_LABELS[difficulty]}）の番です…</div>
             <DiceTray roll={game.roll} moves={[]} onChoose={() => {}} />
+            <dl className="forecast forecast--ai">
+              <div className="forecast__row">
+                <dt>今ターンの進捗</dt>
+                <dd>{formatProgress(progressNow)}</dd>
+              </div>
+              <div className="forecast__row">
+                <dt>判断の根拠</dt>
+                <dd>
+                  {aiDecision ? (
+                    <>
+                      {describeDecision(aiDecision)}
+                      <span className={`forecast__verdict forecast__verdict--${aiDecision.continue ? 'roll' : 'stop'}`}>
+                        {aiDecision.continue ? '振る' : '止める'}
+                      </span>
+                    </>
+                  ) : (
+                    <span className="forecast__pending">{DIFFICULTY_HINTS[difficulty]}</span>
+                  )}
+                </dd>
+              </div>
+            </dl>
           </>
         ) : game.phase === 'busted' ? (
           <>
@@ -83,6 +107,18 @@ export function Match() {
                 <span className="turn__burst-detail">（1296通り中 {burst.burstCount} 通り）</span>
               </div>
             )}
+            {forecast && (
+              <dl className="forecast">
+                <div className="forecast__row">
+                  <dt>今の進捗</dt>
+                  <dd>{formatProgress(progressNow)}</dd>
+                </div>
+                <div className="forecast__row">
+                  <dt>振ると期待</dt>
+                  <dd>{formatProgress(forecast)}</dd>
+                </div>
+              </dl>
+            )}
             <div className="turn__actions">
               <button type="button" className="btn btn--move" onClick={roll}>振る</button>
               <button
@@ -98,10 +134,16 @@ export function Match() {
           </>
         )}
 
-        <label className="toggle">
-          <input type="checkbox" checked={showBurst} onChange={e => setShowBurst(e.target.checked)} />
-          バースト率を表示する
-        </label>
+        <div className="toggles">
+          <label className="toggle">
+            <input type="checkbox" checked={showBurst} onChange={e => setShowBurst(e.target.checked)} />
+            バースト率を表示する
+          </label>
+          <label className="toggle">
+            <input type="checkbox" checked={showForecast} onChange={e => setShowForecast(e.target.checked)} />
+            期待値を表示する
+          </label>
+        </div>
       </section>
 
       <TurnLog log={log} />

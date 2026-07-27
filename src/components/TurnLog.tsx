@@ -14,7 +14,8 @@ export function TurnLog({ log }: Props) {
         {[...log].reverse().map(entry => (
           <li className={`log__item log__item--p${entry.player}`} key={entry.id}>
             <span className="log__who">{PLAYER_NAMES[entry.player]}</span>
-            <span>{entry.text}</span>
+            <span className="log__text">{entry.text}</span>
+            {entry.detail && <span className="log__detail">{entry.detail}</span>}
           </li>
         ))}
       </ol>

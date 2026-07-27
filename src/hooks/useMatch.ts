@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { COLUMNS, burstProbability } from '../lib/cantstop';
-import { chooseMove, shouldContinue, type Difficulty } from '../lib/ai';
+import { chooseMove, currentProgress, decide, expectedAfterRoll, type Difficulty, type Progress, type StopDecision } from '../lib/ai';
+import { describeDecision } from '../lib/format';
 import {
   applyMove,
   applyRoll,
@@ -21,7 +22,7 @@ export const AI: PlayerId = 1;
 
 export const PLAYER_NAMES: Record<PlayerId, string> = { 0: 'あなた', 1: 'AI' };
 
-export type LogEntry = { id: number; player: PlayerId; text: string };
+export type LogEntry = { id: number; player: PlayerId; text: string; detail?: string };
 
 /** AIの手を1つずつ見せるための待ち時間(ms)。 */
 const AI_DELAY: Record<GameState['phase'], number> = {
@@ -32,7 +33,7 @@ const AI_DELAY: Record<GameState['phase'], number> = {
   finished: 0,
 };
 
-const MAX_LOG = 40;
+const MAX_LOG = 60;
 
 function describeSums(sums: number[]): string {
   if (sums.length === 1) return `${sums[0]} を進めた`;
@@ -57,11 +58,13 @@ export function useMatch() {
   const [game, setGame] = useState<GameState>(createGame);
   const [log, setLog] = useState<LogEntry[]>([]);
   const [showBurst, setShowBurst] = useState(true);
+  const [showForecast, setShowForecast] = useState(true);
+  const [aiDecision, setAiDecision] = useState<StopDecision | null>(null);
 
   const logIdRef = useRef(0);
 
-  const append = useCallback((player: PlayerId, text: string) => {
-    setLog(prev => [...prev, { id: logIdRef.current++, player, text }].slice(-MAX_LOG));
+  const append = useCallback((player: PlayerId, text: string, detail?: string) => {
+    setLog(prev => [...prev, { id: logIdRef.current++, player, text, detail }].slice(-MAX_LOG));
   }, []);
 
   /** 出目に対して選べる手。手番プレイヤーの選択肢。 */
@@ -72,6 +75,20 @@ export function useMatch() {
 
   /** 今の局面でもう1回振ったときのバースト確率。 */
   const burst = useMemo(() => burstProbability(turnStateOf(game)), [game]);
+
+  /** 手番プレイヤーが今ターンに積んだ進捗。 */
+  const progressNow = useMemo<Progress>(() => currentProgress(game), [game]);
+
+  /**
+   * 人間がもう1回振ったときの期待進捗。
+   * 1296通りを走査するので、表示しないときは計算しない。
+   */
+  const forecast = useMemo<Progress | null>(
+    () => (showForecast && game.current === HUMAN && game.phase !== 'finished'
+      ? expectedAfterRoll(game)
+      : null),
+    [game, showForecast],
+  );
 
   const isHumanTurn = game.current === HUMAN && game.phase !== 'finished';
 
@@ -106,6 +123,7 @@ export function useMatch() {
   const newMatch = useCallback(() => {
     setGame(createGame());
     setLog([]);
+    setAiDecision(null);
   }, []);
 
   // AIの手番を1手ずつ進める。
@@ -114,6 +132,8 @@ export function useMatch() {
 
     const timer = setTimeout(() => {
       if (game.phase === 'roll') {
+        // 手番の1投目なら、前のターンの判断表示を消す。
+        if (game.rollsThisTurn === 0) setAiDecision(null);
         const dice = rollDice(rng);
         const next = applyRoll(game, dice);
         setGame(next);
@@ -123,12 +143,15 @@ export function useMatch() {
         setGame(applyMove(game, move));
         append(AI, describeSums(move.sums));
       } else if (game.phase === 'decide') {
-        if (shouldContinue(game, difficulty)) {
+        const decision = decide(game, difficulty);
+        setAiDecision(decision);
+        if (decision.continue) {
           setGame({ ...game, phase: 'roll' });
+          append(AI, '続行', describeDecision(decision));
         } else {
           const next = stopTurn(game);
           setGame(next);
-          append(AI, describeStop(game, next));
+          append(AI, describeStop(game, next), describeDecision(decision));
         }
       } else {
         setGame(bustTurn(game));
@@ -140,8 +163,10 @@ export function useMatch() {
 
   return {
     game, log, moves, burst, isHumanTurn,
+    progressNow, forecast, aiDecision,
     difficulty, setDifficulty,
     showBurst, setShowBurst,
+    showForecast, setShowForecast,
     roll, choose, stop, acknowledgeBust, newMatch,
   };
 }

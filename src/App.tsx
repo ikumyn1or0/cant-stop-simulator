@@ -51,6 +51,8 @@ export default function App() {
   return (
     <div className="app">
       <header className="header">
+        {/* 狭い画面で「シミュレ／ーター」と単語途中で割れるため、画面内は短い表記にする。
+            正式名称はタブのタイトルと PWA の manifest 側で持つ。 */}
         <h1 className="title">キャントストップ</h1>
         <button type="button" className="btn btn--icon" onClick={cycleTheme} aria-label="テーマ切替">
           {THEME_ICONS[theme]}

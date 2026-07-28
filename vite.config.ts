@@ -22,9 +22,10 @@ export default defineConfig(({ command }) => ({
     VitePWA({
       registerType: 'autoUpdate',
       manifest: {
-        name: 'キャントストップ バースト確率',
-        short_name: 'バースト確率',
-        description: 'キャントストップのバースト確率を1296通り全列挙で厳密計算するツール',
+        name: 'キャントストップ シミュレーター',
+        short_name: 'キャントストップ',
+        lang: 'ja',
+        description: 'キャントストップのバースト確率を1296通り全列挙で厳密計算し、AIとの対戦もできるツール',
         theme_color: '#b45309',
         background_color: '#faf5ef',
         display: 'standalone',
